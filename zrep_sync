@@ -562,6 +562,7 @@ zrep_sync(){
 zrep_refresh(){
 	typeset srcfs destfs desthost newsnap newseq master
 	typeset force
+	typeset recv_s
 
 	if [[ "$ZREP_FORCE" == "-f" ]] ; then
 		force=-F
@@ -612,16 +613,17 @@ zrep_refresh(){
 
 	_debugprint refresh step 2: Pulling $newsnap
 	if [[ "$ZREP_RESUME" != "" ]] ; then
+		recv_s="-s"
 		token=`$ZFSGETVAL receive_resume_token $destfs`
 		if [[ "$token" == "-" ]] ; then token="" ; fi
 	fi
 
 	if [[ "$BBCP" != "" ]] ; then
 		$BBCP -N io "$srchost:$ZREP_PATH _refreshpull $newsnap $token" \
-		  "zfs recv $force $destfs"
+		  "zfs recv $recv_s $force $destfs"
 	else
 		zrep_ssh $srchost "$ZREP_PATH ${ZREP_R} _refreshpull $newsnap $token ${Z_F_OUT}" |
-		  eval ${Z_F_IN} zfs recv $force $destfs
+		  eval ${Z_F_IN} zfs recv $recv_s $force $destfs
 	fi
 	if [[ $? -ne 0 ]] ; then
 		zrep_errquit Unforseen error pulling snapshot $newsnap from $srchost
